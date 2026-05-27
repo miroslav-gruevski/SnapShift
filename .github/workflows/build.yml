@@ -65,14 +65,20 @@ jobs:
             libnuma-dev \
             libsharpyuv-dev
 
-      - name: Install Windows deps
+      - name: Setup vcpkg
         if: matrix.platform == 'windows-latest'
-        run: |
-          choco install cmake -y
-          choco install nasm -y
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 2024.12.12
 
-      - name: Resolve libheif for non-macOS builds
-        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'windows-latest'
+      - name: Install libheif (Windows)
+        if: matrix.platform == 'windows-latest'
+        run: vcpkg install libheif:x64-windows
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+      - name: Resolve libheif for Linux builds
+        if: matrix.platform == 'ubuntu-24.04'
         working-directory: src-tauri
         run: cargo update -p libheif-rs -p libheif-sys
 
