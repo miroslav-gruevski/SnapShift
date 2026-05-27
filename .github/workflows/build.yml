@@ -89,16 +89,229 @@ jobs:
       - name: Typecheck and build frontend
         run: npm run build
 
+      - name: Import Apple codesign certificate
+        if: matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true'
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+
+      - name: Keep keychain unlocked (macOS signing)
+        if: matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true'
+        run: security set-keychain-settings -t 3600 -u build.keychain
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VCPKG_ROOT: ${{ matrix.platform == 'windows-latest' && 'C:\vcpkg' || '' }}
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.platform == 'windows-latest' && 'x64-windows-static-md' || '' }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_CERTIFICATE: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_ID: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_TEAM_ID || '' }}
+          KEYCHAIN_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.KEYCHAIN_PASSWORD || '' }}
+          WINDOWS_CERTIFICATE: ${{ matrix.platform == 'windows-latest' && vars.SIGN_RELEASES == 'true' && secrets.WINDOWS_CERTIFICATE || '' }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ matrix.platform == 'windows-latest' && vars.SIGN_RELEASES == 'true' && secrets.WINDOWS_CERTIFICATE_PASSWORD || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "SnapShift ${{ github.ref_name }}"
-          releaseBody: "Download the installer for your platform below."
+          releaseBody: |
+            Download the installer for your platform below.
+
+            **macOS:** `.dmg` -> drag to Applications -> first launch may need right-click -> Open (unsigned build).
+            **Windows:** `.msi` -> SmartScreen -> More info -> Run anyway (unsigned build).
+            **Linux:** `.deb`, `.rpm`, or `.AppImage` (`chmod +x` first).
+
+            See the [install guide](https://github.com/miroslav-gruevski/SnapShift#install) for one-line Homebrew / Scoop install.
           releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
+
+  publish-update-manifest:
+    name: Publish updater manifest
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate latest.json and attach to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          tmp=$(mktemp -d)
+          gh release download "$TAG" -R "${{ github.repository }}" -D "$tmp" -p "*.sig" || true
+
+          sig_for() {
+            local pattern="$1"
+            local file
+            file=$(ls "$tmp" 2>/dev/null | grep -E "$pattern" | head -n1 || true)
+            if [ -n "$file" ]; then
+              cat "$tmp/$file"
+            else
+              echo ""
+            fi
+          }
+
+          base="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+          mac_arm_url="$base/SnapShift_aarch64.app.tar.gz"
+          mac_x64_url="$base/SnapShift_x64.app.tar.gz"
+          linux_url="$base/SnapShift_${version}_amd64.AppImage"
+          win_url="$base/SnapShift_${version}_x64-setup.exe"
+
+          mac_arm_sig=$(sig_for "aarch64.app.tar.gz.sig$")
+          mac_x64_sig=$(sig_for "x64.app.tar.gz.sig$")
+          linux_sig=$(sig_for "amd64.AppImage.sig$")
+          win_sig=$(sig_for "x64-setup.exe.sig$")
+
+          cat > latest.json <<JSON
+          {
+            "version": "${version}",
+            "notes": "See https://github.com/${{ github.repository }}/releases/tag/${TAG}",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "platforms": {
+              "darwin-aarch64": { "url": "${mac_arm_url}", "signature": "${mac_arm_sig}" },
+              "darwin-x86_64":  { "url": "${mac_x64_url}", "signature": "${mac_x64_sig}" },
+              "linux-x86_64":   { "url": "${linux_url}",   "signature": "${linux_sig}" },
+              "windows-x86_64": { "url": "${win_url}",     "signature": "${win_sig}" }
+            }
+          }
+          JSON
+
+          gh release upload "$TAG" latest.json -R "${{ github.repository }}" --clobber
+
+  bump-homebrew:
+    name: Bump Homebrew tap
+    needs: publish-update-manifest
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_PACKAGE_MANAGERS == 'true'
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v4
+        with:
+          repository: miroslav-gruevski/homebrew-snapshift
+          token: ${{ secrets.PACKAGE_MANAGER_TOKEN }}
+          path: tap
+
+      - name: Update cask
+        env:
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          arm_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_aarch64.dmg"
+          x64_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_x64.dmg"
+
+          arm_sha=$(curl -sL "$arm_url" | shasum -a 256 | awk '{print $1}')
+          x64_sha=$(curl -sL "$x64_url" | shasum -a 256 | awk '{print $1}')
+
+          mkdir -p tap/Casks
+          cat > tap/Casks/snapshift.rb <<RUBY
+          cask "snapshift" do
+            version "${version}"
+
+            on_arm do
+              url "https://github.com/${REPO}/releases/download/v#{version}/SnapShift_#{version}_aarch64.dmg"
+              sha256 "${arm_sha}"
+            end
+
+            on_intel do
+              url "https://github.com/${REPO}/releases/download/v#{version}/SnapShift_#{version}_x64.dmg"
+              sha256 "${x64_sha}"
+            end
+
+            name "SnapShift"
+            desc "Tray-based batch image converter"
+            homepage "https://github.com/${REPO}"
+
+            app "SnapShift.app"
+
+            zap trash: [
+              "~/Library/Application Support/com.miro.snapshift",
+              "~/Library/Caches/com.miro.snapshift",
+              "~/Library/Preferences/com.miro.snapshift.plist",
+            ]
+          end
+          RUBY
+
+      - name: Commit and push tap
+        working-directory: tap
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/snapshift.rb
+          git diff --cached --quiet || git commit -m "snapshift ${TAG}"
+          git push
+
+  bump-scoop:
+    name: Bump Scoop bucket
+    needs: publish-update-manifest
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_PACKAGE_MANAGERS == 'true'
+    steps:
+      - name: Checkout bucket
+        uses: actions/checkout@v4
+        with:
+          repository: miroslav-gruevski/scoop-snapshift
+          token: ${{ secrets.PACKAGE_MANAGER_TOKEN }}
+          path: bucket
+
+      - name: Update manifest
+        env:
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          msi_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_x64_en-US.msi"
+          msi_sha=$(curl -sL "$msi_url" | sha256sum | awk '{print $1}')
+
+          mkdir -p bucket/bucket
+          cat > bucket/bucket/snapshift.json <<JSON
+          {
+            "version": "${version}",
+            "description": "Tray-based batch image converter",
+            "homepage": "https://github.com/${REPO}",
+            "license": "MIT",
+            "url": "${msi_url}",
+            "hash": "${msi_sha}",
+            "architecture": {
+              "64bit": {
+                "url": "${msi_url}",
+                "hash": "${msi_sha}"
+              }
+            },
+            "shortcuts": [
+              ["SnapShift.exe", "SnapShift"]
+            ],
+            "checkver": {
+              "github": "https://github.com/${REPO}"
+            },
+            "autoupdate": {
+              "url": "https://github.com/${REPO}/releases/download/v\$version/SnapShift_\$version_x64_en-US.msi"
+            }
+          }
+          JSON
+
+      - name: Commit and push bucket
+        working-directory: bucket
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add bucket/snapshift.json
+          git diff --cached --quiet || git commit -m "snapshift ${TAG}"
+          git push

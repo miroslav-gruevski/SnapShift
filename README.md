@@ -4,36 +4,61 @@ A minimal tray app for fast batch image conversion. Drop files or folders, pick 
 
 Repository: https://github.com/miroslav-gruevski/SnapShift
 
-## Download
-
-Installers are published on [GitHub Releases](https://github.com/miroslav-gruevski/SnapShift/releases). Latest: **v0.1.4** (macOS, Windows, Linux). Bundle filenames may still show `0.1.0` until the app version in `tauri.conf.json` is bumped.
-
-| Platform | Where to download | File to look for |
-|----------|-------------------|------------------|
-| macOS (Apple Silicon) | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.dmg` with `aarch64` or `arm64` in the name |
-| macOS (Intel) | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.dmg` with `x64` or `x86_64` in the name |
-| Windows | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.msi` (recommended) or `.exe` setup |
-| Linux | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.deb` or `.AppImage` |
-
-If you only see older drafts, use the **Latest** release (v0.1.4).
-
 ## Install
+
+Pick the smoothest path for your platform. Anything in **Easy** column is one command and no security prompts. Anything in **Manual** still works but shows a one-time "unidentified developer" or SmartScreen click because the build is not signed by a paid certificate.
+
+| Platform | Easy (no prompts) | Manual (from Releases) |
+|----------|-------------------|------------------------|
+| macOS | `brew install --cask miroslav-gruevski/snapshift/snapshift` | `.dmg` -> drag to Applications |
+| Windows | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift && scoop install snapshift` | `.msi` -> run installer |
+| Linux | n/a (no gatekeeper) | `.deb`, `.rpm`, or `.AppImage` |
+
+SnapShift updates itself once installed: a new version pops up an in-app prompt, downloads, installs, and restarts. No re-download from Releases is needed after the first install.
 
 ### macOS
 
-1. Download the `.dmg` for your Mac: **Apple Silicon** (M1/M2/M3) or **Intel**.
+**Recommended:** Homebrew strips the quarantine attribute on cask installs of unsigned apps, so the app opens with no Gatekeeper prompt.
+
+```bash
+brew install --cask miroslav-gruevski/snapshift/snapshift
+open -a SnapShift
+```
+
+**Manual:**
+
+1. Download the `.dmg` for your Mac: `aarch64` (Apple Silicon) or `x64` (Intel).
 2. Open the DMG and drag **SnapShift** into **Applications**.
-3. Open SnapShift from Applications. It runs from the menu bar (tray), not the Dock.
-4. If macOS blocks the app (“unidentified developer”): right-click the app → **Open** → confirm. Or go to **System Settings → Privacy & Security** and allow SnapShift.
+3. Open Applications, right-click **SnapShift**, choose **Open**, confirm. Future launches are a normal double-click.
+
+If macOS still says **"damaged"** (extremely rare with this build, but the safety net):
+
+```bash
+xattr -cr /Applications/SnapShift.app
+codesign --force --deep --sign - /Applications/SnapShift.app
+```
+
+Then right-click the app -> **Open** -> **Open**.
 
 ### Windows
 
-1. Download the `.msi` installer (recommended) or the `.exe` setup from Releases.
-2. Run the installer and follow the prompts.
-3. If Windows SmartScreen appears, choose **More info** → **Run anyway** (the app is not signed with a commercial certificate yet).
-4. After install, find **SnapShift** in the system tray (notification area). Click the icon to open the conversion window.
+**Recommended:** Scoop installs per-user (no admin) and skips SmartScreen for users who already trust the bucket.
+
+```powershell
+scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift
+scoop install snapshift
+```
+
+**Manual:**
+
+1. Download the `.msi` (recommended) or the `.exe` setup from Releases.
+2. Run the installer.
+3. If **Windows protected your PC** appears: click **More info** -> **Run anyway**.
+4. Use the system tray icon (notification area) to open the conversion window.
 
 ### Linux
+
+Linux desktops don't quarantine downloads, so any of these work directly.
 
 **Debian / Ubuntu (.deb)**
 
@@ -42,16 +67,20 @@ sudo dpkg -i SnapShift_*_amd64.deb
 sudo apt-get install -f
 ```
 
-Replace the filename with the `.deb` you downloaded from Releases.
+**Fedora / RHEL (.rpm)**
 
-**AppImage (most distros)**
+```bash
+sudo rpm -i SnapShift-*.x86_64.rpm
+```
+
+**AppImage (any distro)**
 
 ```bash
 chmod +x SnapShift_*_amd64.AppImage
 ./SnapShift_*_amd64.AppImage
 ```
 
-You can move the AppImage anywhere and run it from a terminal or file manager. Tray integration depends on your desktop environment.
+Tray integration depends on your desktop environment (KDE, GNOME with AppIndicator extension, etc.).
 
 ## Using SnapShift
 
@@ -112,25 +141,75 @@ Release installers are written to `src-tauri/target/release/bundle/`.
 
 On macOS, if the build fails on the Xcode license: `sudo xcodebuild -license accept`
 
+## Auto-updates
+
+Once installed, SnapShift checks for new releases on startup using Tauri's updater plugin. New versions are downloaded, signed-verified, installed, and the app restarts. Users never need to re-visit the Releases page after the first install.
+
+The update manifest is `latest.json` published on every GitHub Release. Updates are verified against an Ed25519 public key embedded in the app; the private key is held only in the `TAURI_SIGNING_PRIVATE_KEY` repo secret.
+
+## Code signing (optional, paid)
+
+CI builds work without any certificates. If you ever buy a paid signing certificate, the existing workflow picks it up automatically and downloads become warning-free.
+
+| Platform | Free unsigned (default today) | Signed (paid certificate) |
+|----------|-------------------------------|---------------------------|
+| macOS | One-time right-click -> Open, or `xattr` fallback | No prompt; notarized DMG |
+| Windows | SmartScreen -> More info -> Run anyway | No prompt once reputation builds |
+| Linux | Install directly | n/a |
+
+To enable paid signing:
+
+1. **Settings -> Secrets and variables -> Actions -> Variables**: set `SIGN_RELEASES = true`.
+2. Add secrets:
+
+   | Secret | Used for |
+   |--------|----------|
+   | `APPLE_CERTIFICATE` | Base64 `.p12` (Developer ID Application) |
+   | `APPLE_CERTIFICATE_PASSWORD` | `.p12` export password |
+   | `APPLE_SIGNING_IDENTITY` | e.g. `Developer ID Application: Your Name (TEAMID)` |
+   | `APPLE_ID` | Apple ID email |
+   | `APPLE_PASSWORD` | [App-specific password](https://appleid.apple.com) for notary |
+   | `APPLE_TEAM_ID` | 10-character Team ID |
+   | `KEYCHAIN_PASSWORD` | Random strong password used by CI keychain |
+   | `WINDOWS_CERTIFICATE` | Base64 `.pfx` (Authenticode) |
+   | `WINDOWS_CERTIFICATE_PASSWORD` | `.pfx` password |
+
+3. Push a tag. CI signs and notarizes via [tauri-action](https://github.com/tauri-apps/tauri-action).
+
 ## Releasing (maintainers)
 
 CI builds installers when you push a version tag. Releases start as **drafts** until you publish them on GitHub.
 
-1. Bump `version` in [`package.json`](package.json), [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json), and [`src-tauri/Cargo.toml`](src-tauri/Cargo.toml) if needed.
+### One-time setup
+
+1. **Tauri updater key** (required for any future updates to work):
+
+   ```bash
+   npm run tauri signer generate -- -w ~/.tauri/snapshift.key
+   ```
+
+   Copy the contents of `~/.tauri/snapshift.key` into repo secret `TAURI_SIGNING_PRIVATE_KEY`. Keep `~/.tauri/snapshift.key` backed up safely; losing it breaks updates for every existing install.
+
+2. **Homebrew tap + Scoop bucket** (optional, for one-line installs):
+   - Create two empty public repos: `miroslav-gruevski/homebrew-snapshift` and `miroslav-gruevski/scoop-snapshift`.
+   - Create a fine-grained PAT with `Contents: Read and write` on those two repos; store it as repo secret `PACKAGE_MANAGER_TOKEN`.
+   - Set variable `PUBLISH_PACKAGE_MANAGERS = true`.
+
+### Every release
+
+1. Bump `version` in [`package.json`](package.json), [`src-tauri/tauri.conf.json`](src-tauri/tauri.conf.json), and [`src-tauri/Cargo.toml`](src-tauri/Cargo.toml).
 2. Commit and push to `main`.
 3. Tag and push:
 
    ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
+   git tag v0.1.5
+   git push origin v0.1.5
    ```
 
-4. Open [Actions](https://github.com/miroslav-gruevski/SnapShift/actions) and wait for all four jobs (macOS ARM, macOS Intel, Linux, Windows) to finish.
-5. Open [Releases](https://github.com/miroslav-gruevski/SnapShift/releases), open the draft for that tag, check the uploaded `.dmg`, `.msi`, `.exe`, `.deb`, and `.AppImage` files, then click **Publish release**.
+4. Wait for [Actions](https://github.com/miroslav-gruevski/SnapShift/actions): all four `Build (...)` jobs, plus `Publish updater manifest`, plus (if enabled) `Bump Homebrew tap` and `Bump Scoop bucket`.
+5. Open [Releases](https://github.com/miroslav-gruevski/SnapShift/releases), open the draft, verify `latest.json` is attached, then click **Publish release**.
 
-Downloads only appear for everyone after the draft is published.
-
-To run a build without a tag: **Actions → Build & Release → Run workflow** (`workflow_dispatch`).
+To run a build without a tag: **Actions -> Build & Release -> Run workflow** (`workflow_dispatch`).
 
 ## Contributing
 

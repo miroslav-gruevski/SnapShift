@@ -6,6 +6,7 @@ import { DropZone } from "./components/DropZone";
 import { FormatSelector } from "./components/FormatSelector";
 import { JobList } from "./components/JobList";
 import { convertFiles, cancelConversion, revealOutput } from "./lib/converter";
+import { checkForUpdates } from "./lib/updater";
 import type {
   OutputFormat,
   Job,
@@ -159,6 +160,13 @@ function App() {
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      checkForUpdates();
+    }, 3000);
+    return () => clearTimeout(t);
   }, []);
 
   // Debounced bi-directional resize

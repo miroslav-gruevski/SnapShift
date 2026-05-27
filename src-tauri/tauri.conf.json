@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "SnapShift",
-  "version": "0.1.0",
+  "version": "0.1.5",
   "identifier": "com.miro.snapshift",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -19,12 +19,32 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
+    "publisher": "Miroslav Gruevski",
+    "homepage": "https://github.com/miroslav-gruevski/SnapShift",
+    "shortDescription": "Tray-based batch image converter for HEIC, JPEG, PNG, WebP",
+    "longDescription": "SnapShift converts batches of images from your menu bar or system tray. Drop files or folders, pick an output format, and get converted images on your Desktop.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "entitlements": "./Entitlements.plist",
+      "signingIdentity": "-"
+    },
+    "windows": {
+      "timestampUrl": "http://timestamp.digicert.com"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQxRjMwM0QyQjIxRUM4RjAKUldUd3lCNnkwZ1B6MFdJYUlyYlJFc1lINFlyeTZVQ0hjN1RieldJdWRvQTltbDk3TXFpOE5kUjcK",
+      "endpoints": [
+        "https://github.com/miroslav-gruevski/SnapShift/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

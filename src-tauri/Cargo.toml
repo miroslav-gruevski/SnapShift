@@ -1,6 +1,6 @@
 [package]
 name = "snapshift"
-version = "0.1.0"
+version = "0.1.5"
 description = "SnapShift - Image converter"
 authors = ["Miro"]
 edition = "2021"
@@ -24,6 +24,9 @@ tempfile = "3"
 thiserror = "2"
 log = "0.4"
 env_logger = "0.11"
+tauri-plugin-updater = "2.10.1"
+tauri-plugin-process = "2.3.1"
+serde_json = "1.0.150"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 libheif-rs = { version = "1.1", features = ["compile-libheif"] }

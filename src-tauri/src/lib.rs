@@ -229,6 +229,8 @@ pub fn run() {
     tauri::Builder::default()
         .manage(CancelFlag(Arc::new(AtomicBool::new(false))))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let quit =
                 MenuItem::with_id(app, "quit", "Quit SnapShift", true, None::<&str>)?;
