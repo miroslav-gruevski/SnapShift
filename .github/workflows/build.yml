@@ -61,11 +61,20 @@ jobs:
             nasm \
             libde265-dev \
             libx265-dev \
-            libaom-dev
+            libaom-dev \
+            libnuma-dev \
+            libsharpyuv-dev
 
       - name: Install Windows deps
         if: matrix.platform == 'windows-latest'
-        run: choco install cmake -y
+        run: |
+          choco install cmake -y
+          choco install nasm -y
+
+      - name: Resolve libheif for non-macOS builds
+        if: matrix.platform == 'ubuntu-24.04' || matrix.platform == 'windows-latest'
+        working-directory: src-tauri
+        run: cargo update -p libheif-rs -p libheif-sys
 
       - name: Install frontend deps
         run: npm ci
