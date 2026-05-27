@@ -67,15 +67,16 @@ jobs:
 
       - name: Setup vcpkg
         if: matrix.platform == 'windows-latest'
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: 2024.12.12
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git C:\vcpkg
+          & C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+          "VCPKG_ROOT=C:\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Install libheif (Windows)
         if: matrix.platform == 'windows-latest'
-        run: vcpkg install libheif:x64-windows
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        shell: pwsh
+        run: C:\vcpkg\vcpkg.exe install libheif:x64-windows
 
       - name: Resolve libheif for Linux builds
         if: matrix.platform == 'ubuntu-24.04'
@@ -92,6 +93,7 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VCPKG_ROOT: ${{ matrix.platform == 'windows-latest' && 'C:\vcpkg' || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "SnapShift ${{ github.ref_name }}"
