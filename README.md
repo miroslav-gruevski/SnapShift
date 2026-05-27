@@ -6,7 +6,7 @@ Repository: https://github.com/miroslav-gruevski/SnapShift
 
 ## Download
 
-Installers are published on [GitHub Releases](https://github.com/miroslav-gruevski/SnapShift/releases). Pick the file that matches your system. Asset names include the version (for example `SnapShift_0.1.0_…`).
+Installers are published on [GitHub Releases](https://github.com/miroslav-gruevski/SnapShift/releases). Latest: **v0.1.4** (macOS, Windows, Linux). Bundle filenames may still show `0.1.0` until the app version in `tauri.conf.json` is bumped.
 
 | Platform | Where to download | File to look for |
 |----------|-------------------|------------------|
@@ -15,7 +15,7 @@ Installers are published on [GitHub Releases](https://github.com/miroslav-gruevs
 | Windows | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.msi` (recommended) or `.exe` setup |
 | Linux | [Releases](https://github.com/miroslav-gruevski/SnapShift/releases) | `.deb` or `.AppImage` |
 
-If the Releases page is empty, no build has been published yet. See [Releasing (maintainers)](#releasing-maintainers) below.
+If you only see older drafts, use the **Latest** release (v0.1.4).
 
 ## Install
 
