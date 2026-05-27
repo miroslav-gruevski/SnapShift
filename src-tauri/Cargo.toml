@@ -1,0 +1,29 @@
+[package]
+name = "snapshift"
+version = "0.1.0"
+description = "SnapShift - Image converter"
+authors = ["Miro"]
+edition = "2021"
+
+[lib]
+name = "snapshift_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+dirs = "5"
+chrono = "0.4"
+rayon = "1.10"
+image = { version = "0.25", features = ["jpeg", "png", "webp", "tiff"] }
+tempfile = "3"
+thiserror = "2"
+log = "0.4"
+env_logger = "0.11"
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+libheif-rs = { version = "1.0", features = [] }
