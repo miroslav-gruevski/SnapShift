@@ -89,18 +89,6 @@ jobs:
       - name: Typecheck and build frontend
         run: npm run build
 
-      - name: Import Apple codesign certificate
-        if: matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true'
-        uses: apple-actions/import-codesign-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
-
-      - name: Keep keychain unlocked (macOS signing)
-        if: matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true'
-        run: security set-keychain-settings -t 3600 -u build.keychain
-
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -109,15 +97,6 @@ jobs:
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.platform == 'windows-latest' && 'x64-windows-static-md' || '' }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          APPLE_CERTIFICATE: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_CERTIFICATE || '' }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
-          APPLE_SIGNING_IDENTITY: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_SIGNING_IDENTITY || '' }}
-          APPLE_ID: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_ID || '' }}
-          APPLE_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.APPLE_TEAM_ID || '' }}
-          KEYCHAIN_PASSWORD: ${{ matrix.platform == 'macos-latest' && vars.SIGN_RELEASES == 'true' && secrets.KEYCHAIN_PASSWORD || '' }}
-          WINDOWS_CERTIFICATE: ${{ matrix.platform == 'windows-latest' && vars.SIGN_RELEASES == 'true' && secrets.WINDOWS_CERTIFICATE || '' }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ matrix.platform == 'windows-latest' && vars.SIGN_RELEASES == 'true' && secrets.WINDOWS_CERTIFICATE_PASSWORD || '' }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "SnapShift ${{ github.ref_name }}"
