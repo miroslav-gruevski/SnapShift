@@ -4,6 +4,8 @@ A minimal tray app for fast batch image conversion. Drop files or folders, pick 
 
 Repository: https://github.com/miroslav-gruevski/SnapShift
 
+**Latest release:** [v0.1.6](https://github.com/miroslav-gruevski/SnapShift/releases/latest) (macOS, Windows, Linux). Installer filenames use the app version in `tauri.conf.json` (currently `0.1.6`).
+
 ## Install
 
 Pick the smoothest path for your platform. Anything in **Easy** column is one command and no security prompts. Anything in **Manual** still works but shows a one-time "unidentified developer" or SmartScreen click because the build is not signed by a paid certificate.
@@ -202,8 +204,8 @@ CI builds installers when you push a version tag. Releases start as **drafts** u
 3. Tag and push:
 
    ```bash
-   git tag v0.1.5
-   git push origin v0.1.5
+   git tag v0.1.6
+   git push origin v0.1.6
    ```
 
 4. Wait for [Actions](https://github.com/miroslav-gruevski/SnapShift/actions): all four `Build (...)` jobs, plus `Publish updater manifest`, plus (if enabled) `Bump Homebrew tap` and `Bump Scoop bucket`.

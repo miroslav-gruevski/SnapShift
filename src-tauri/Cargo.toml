@@ -1,6 +1,6 @@
 [package]
 name = "snapshift"
-version = "0.1.5"
+version = "0.1.6"
 description = "SnapShift - Image converter"
 authors = ["Miro"]
 edition = "2021"

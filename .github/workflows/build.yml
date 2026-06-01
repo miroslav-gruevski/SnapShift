@@ -125,47 +125,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
-          set -euo pipefail
-          version="${TAG#v}"
-          tmp=$(mktemp -d)
-          gh release download "$TAG" -R "${{ github.repository }}" -D "$tmp" -p "*.sig" || true
-
-          sig_for() {
-            local pattern="$1"
-            local file
-            file=$(ls "$tmp" 2>/dev/null | grep -E "$pattern" | head -n1 || true)
-            if [ -n "$file" ]; then
-              cat "$tmp/$file"
-            else
-              echo ""
-            fi
-          }
-
-          base="https://github.com/${{ github.repository }}/releases/download/${TAG}"
-          mac_arm_url="$base/SnapShift_aarch64.app.tar.gz"
-          mac_x64_url="$base/SnapShift_x64.app.tar.gz"
-          linux_url="$base/SnapShift_${version}_amd64.AppImage"
-          win_url="$base/SnapShift_${version}_x64-setup.exe"
-
-          mac_arm_sig=$(sig_for "aarch64.app.tar.gz.sig$")
-          mac_x64_sig=$(sig_for "x64.app.tar.gz.sig$")
-          linux_sig=$(sig_for "amd64.AppImage.sig$")
-          win_sig=$(sig_for "x64-setup.exe.sig$")
-
-          cat > latest.json <<JSON
-          {
-            "version": "${version}",
-            "notes": "See https://github.com/${{ github.repository }}/releases/tag/${TAG}",
-            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "platforms": {
-              "darwin-aarch64": { "url": "${mac_arm_url}", "signature": "${mac_arm_sig}" },
-              "darwin-x86_64":  { "url": "${mac_x64_url}", "signature": "${mac_x64_sig}" },
-              "linux-x86_64":   { "url": "${linux_url}",   "signature": "${linux_sig}" },
-              "windows-x86_64": { "url": "${win_url}",     "signature": "${win_sig}" }
-            }
-          }
-          JSON
-
+          chmod +x scripts/generate-latest-json.sh
+          scripts/generate-latest-json.sh "$TAG" "${{ github.repository }}"
           gh release upload "$TAG" latest.json -R "${{ github.repository }}" --clobber
 
   bump-homebrew:
@@ -188,9 +149,10 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
-          arm_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_aarch64.dmg"
-          x64_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_x64.dmg"
-
+          arm_dmg=$(gh release view "$TAG" -R "$REPO" --json assets -q '.assets[].name' | grep 'aarch64\.dmg$' | head -n1)
+          x64_dmg=$(gh release view "$TAG" -R "$REPO" --json assets -q '.assets[].name' | grep '_x64\.dmg$' | head -n1)
+          arm_url="https://github.com/${REPO}/releases/download/${TAG}/${arm_dmg}"
+          x64_url="https://github.com/${REPO}/releases/download/${TAG}/${x64_dmg}"
           arm_sha=$(curl -sL "$arm_url" | shasum -a 256 | awk '{print $1}')
           x64_sha=$(curl -sL "$x64_url" | shasum -a 256 | awk '{print $1}')
 
@@ -200,12 +162,14 @@ jobs:
             version "${version}"
 
             on_arm do
-              url "https://github.com/${REPO}/releases/download/v#{version}/SnapShift_#{version}_aarch64.dmg"
+              url "https://github.com/${REPO}/releases/download/${TAG}/${arm_dmg}",
+                  verified: "github.com/${REPO}/"
               sha256 "${arm_sha}"
             end
 
             on_intel do
-              url "https://github.com/${REPO}/releases/download/v#{version}/SnapShift_#{version}_x64.dmg"
+              url "https://github.com/${REPO}/releases/download/${TAG}/${x64_dmg}",
+                  verified: "github.com/${REPO}/"
               sha256 "${x64_sha}"
             end
 
@@ -214,6 +178,10 @@ jobs:
             homepage "https://github.com/${REPO}"
 
             app "SnapShift.app"
+
+            caveats <<~EOS
+              SnapShift is not notarized. On first launch, right-click SnapShift in Applications and choose Open.
+            EOS
 
             zap trash: [
               "~/Library/Application Support/com.miro.snapshift",
@@ -254,7 +222,8 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
-          msi_url="https://github.com/${REPO}/releases/download/${TAG}/SnapShift_${version}_x64_en-US.msi"
+          msi=$(gh release view "$TAG" -R "$REPO" --json assets -q '.assets[].name' | grep '_x64_en-US\.msi$' | head -n1)
+          msi_url="https://github.com/${REPO}/releases/download/${TAG}/${msi}"
           msi_sha=$(curl -sL "$msi_url" | sha256sum | awk '{print $1}')
 
           mkdir -p bucket/bucket
@@ -264,8 +233,6 @@ jobs:
             "description": "Tray-based batch image converter",
             "homepage": "https://github.com/${REPO}",
             "license": "MIT",
-            "url": "${msi_url}",
-            "hash": "${msi_sha}",
             "architecture": {
               "64bit": {
                 "url": "${msi_url}",
@@ -279,7 +246,11 @@ jobs:
               "github": "https://github.com/${REPO}"
             },
             "autoupdate": {
-              "url": "https://github.com/${REPO}/releases/download/v\$version/SnapShift_\$version_x64_en-US.msi"
+              "architecture": {
+                "64bit": {
+                  "url": "https://github.com/${REPO}/releases/download/v\$version/SnapShift_\$version_x64_en-US.msi"
+                }
+              }
             }
           }
           JSON
