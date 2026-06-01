@@ -8,39 +8,48 @@ Repository: https://github.com/miroslav-gruevski/SnapShift
 
 ## Install
 
-Pick the smoothest path for your platform. Anything in **Easy** column is one command and no security prompts. Anything in **Manual** still works but shows a one-time "unidentified developer" or SmartScreen click because the build is not signed by a paid certificate.
+Pick the smoothest path for your platform. macOS and Windows builds are free unsigned releases, so the first launch may need one security approval. After that, SnapShift opens normally and updates itself in-app.
 
-| Platform | Easy (no prompts) | Manual (from Releases) |
-|----------|-------------------|------------------------|
+| Platform | Recommended | Manual (from Releases) |
+|----------|-------------|------------------------|
 | macOS | `brew install --cask miroslav-gruevski/snapshift/snapshift` | `.dmg` -> drag to Applications |
 | Windows | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift && scoop install snapshift` | `.msi` -> run installer |
-| Linux | n/a (no gatekeeper) | `.deb`, `.rpm`, or `.AppImage` |
+| Linux | `.deb`, `.rpm`, or `.AppImage` | same |
 
 SnapShift updates itself once installed: a new version pops up an in-app prompt, downloads, installs, and restarts. No re-download from Releases is needed after the first install.
 
 ### macOS
 
-**Recommended:** Homebrew strips the quarantine attribute on cask installs of unsigned apps, so the app opens with no Gatekeeper prompt.
+**Recommended:** Homebrew installs SnapShift into Applications and keeps updates simple. On recent macOS versions, unsigned apps can still need a one-time Gatekeeper approval on first launch.
 
 ```bash
 brew install --cask miroslav-gruevski/snapshift/snapshift
 open -a SnapShift
 ```
 
+If macOS shows **"Apple could not verify SnapShift.app is free of malware"**:
+
+1. Click **Done**.
+2. Open **System Settings** -> **Privacy & Security**.
+3. Scroll to the **Security** section.
+4. Click **Open Anyway** for SnapShift.
+5. Confirm with Touch ID or your password.
+6. Open SnapShift again with `open -a SnapShift` or from Applications.
+
 **Manual:**
 
 1. Download the `.dmg` for your Mac: `aarch64` (Apple Silicon) or `x64` (Intel).
 2. Open the DMG and drag **SnapShift** into **Applications**.
-3. Open Applications, right-click **SnapShift**, choose **Open**, confirm. Future launches are a normal double-click.
+3. Open **SnapShift** from Applications.
+4. If macOS blocks it, use **System Settings** -> **Privacy & Security** -> **Open Anyway** as above. Future launches are a normal double-click.
 
-If macOS still says **"damaged"** (extremely rare with this build, but the safety net):
+Terminal fallback if **Open Anyway** does not appear:
 
 ```bash
-xattr -cr /Applications/SnapShift.app
+sudo xattr -dr com.apple.quarantine /Applications/SnapShift.app
 codesign --force --deep --sign - /Applications/SnapShift.app
+open -a SnapShift
 ```
-
-Then right-click the app -> **Open** -> **Open**.
 
 ### Windows
 
