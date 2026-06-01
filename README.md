@@ -4,9 +4,7 @@ A minimal tray app for fast batch image conversion. Drop files or folders, pick 
 
 Repository: https://github.com/miroslav-gruevski/SnapShift
 
-**Latest release:** [v0.1.6](https://github.com/miroslav-gruevski/SnapShift/releases/latest) for macOS, Windows, and Linux.
-
-Note: the current v0.1.6 release files still show `0.1.5` in the filename. That is expected for this release; use the files listed below.
+**Latest release:** [v0.1.7](https://github.com/miroslav-gruevski/SnapShift/releases/latest) for macOS, Windows, and Linux.
 
 ## Install
 
@@ -14,9 +12,9 @@ Choose your system below. If you are not technical, use the normal download opti
 
 | System | Best option for most people | If you use Terminal |
 |--------|-----------------------------|---------------------|
-| macOS Apple Silicon (M1/M2/M3/M4) | Download `SnapShift_0.1.5_aarch64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
-| macOS Intel | Download `SnapShift_0.1.5_x64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
-| Windows | Download `SnapShift_0.1.5_x64_en-US.msi` | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift` then `scoop install snapshift` |
+| macOS Apple Silicon (M1/M2/M3/M4) | Download `SnapShift_0.1.7_aarch64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
+| macOS Intel | Download `SnapShift_0.1.7_x64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
+| Windows | Download `SnapShift_0.1.7_x64_en-US.msi` | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift` then `scoop install snapshift` |
 | Linux | Download `.deb`, `.rpm`, or `.AppImage` | Same files, installed from Terminal |
 
 Downloads are on the [Releases page](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
@@ -29,8 +27,8 @@ SnapShift is currently unsigned because this is a free release. macOS and Window
 
 1. Open the [latest release](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
 2. Download the right DMG:
-   - **Apple Silicon (M1/M2/M3/M4):** `SnapShift_0.1.5_aarch64.dmg`
-   - **Intel Mac:** `SnapShift_0.1.5_x64.dmg`
+   - **Apple Silicon (M1/M2/M3/M4):** `SnapShift_0.1.7_aarch64.dmg`
+   - **Intel Mac:** `SnapShift_0.1.7_x64.dmg`
 3. Open the downloaded `.dmg`.
 4. Drag **SnapShift** into **Applications**.
 5. Open **Applications** and double-click **SnapShift**.
@@ -80,7 +78,7 @@ Homebrew installs SnapShift into Applications, but macOS can still require the s
 #### Normal download
 
 1. Open the [latest release](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
-2. Download `SnapShift_0.1.5_x64_en-US.msi`.
+2. Download `SnapShift_0.1.7_x64_en-US.msi`.
 3. Open the downloaded installer.
 4. Follow the installer steps.
 5. Start SnapShift from the Start menu.
@@ -262,8 +260,8 @@ CI builds installers when you push a version tag. Releases start as **drafts** u
 3. Tag and push:
 
    ```bash
-   git tag v0.1.6
-   git push origin v0.1.6
+   git tag v0.1.7
+   git push origin v0.1.7
    ```
 
 4. Wait for [Actions](https://github.com/miroslav-gruevski/SnapShift/actions): all four `Build (...)` jobs, plus `Publish updater manifest`, plus (if enabled) `Bump Homebrew tap` and `Bump Scoop bucket`.

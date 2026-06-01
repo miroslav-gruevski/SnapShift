@@ -7,7 +7,7 @@ export async function checkForUpdates(): Promise<void> {
     if (!update) return;
 
     const accepted = window.confirm(
-      `SnapShift ${update.version} is available.\n\n${update.body ?? ""}\n\nInstall and restart now?`
+      `A SnapShift update is ready.\n\nVersion ${update.version} will install now and SnapShift will restart.\n\nUpdate now?`
     );
     if (!accepted) return;
 
