@@ -4,46 +4,57 @@ A minimal tray app for fast batch image conversion. Drop files or folders, pick 
 
 Repository: https://github.com/miroslav-gruevski/SnapShift
 
-**Latest release:** [v0.1.6](https://github.com/miroslav-gruevski/SnapShift/releases/latest) (macOS, Windows, Linux). Installer filenames use the app version in `tauri.conf.json` (currently `0.1.6`).
+**Latest release:** [v0.1.6](https://github.com/miroslav-gruevski/SnapShift/releases/latest) for macOS, Windows, and Linux.
+
+Note: the current v0.1.6 release files still show `0.1.5` in the filename. That is expected for this release; use the files listed below.
 
 ## Install
 
-Pick the smoothest path for your platform. macOS and Windows builds are free unsigned releases, so the first launch may need one security approval. After that, SnapShift opens normally and updates itself in-app.
+Choose your system below. If you are not technical, use the normal download option.
 
-| Platform | Recommended | Manual (from Releases) |
-|----------|-------------|------------------------|
-| macOS | `brew install --cask miroslav-gruevski/snapshift/snapshift` | `.dmg` -> drag to Applications |
-| Windows | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift && scoop install snapshift` | `.msi` -> run installer |
-| Linux | `.deb`, `.rpm`, or `.AppImage` | same |
+| System | Best option for most people | If you use Terminal |
+|--------|-----------------------------|---------------------|
+| macOS Apple Silicon (M1/M2/M3/M4) | Download `SnapShift_0.1.5_aarch64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
+| macOS Intel | Download `SnapShift_0.1.5_x64.dmg` | `brew install --cask miroslav-gruevski/snapshift/snapshift` |
+| Windows | Download `SnapShift_0.1.5_x64_en-US.msi` | `scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift` then `scoop install snapshift` |
+| Linux | Download `.deb`, `.rpm`, or `.AppImage` | Same files, installed from Terminal |
 
-SnapShift updates itself once installed: a new version pops up an in-app prompt, downloads, installs, and restarts. No re-download from Releases is needed after the first install.
+Downloads are on the [Releases page](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
+
+SnapShift is currently unsigned because this is a free release. macOS and Windows may show one security warning the first time you open it. The steps below show exactly what to click. After the first approval, SnapShift should open normally and update itself in the app.
 
 ### macOS
 
-**Recommended:** Homebrew installs SnapShift into Applications and keeps updates simple. On recent macOS versions, unsigned apps can still need a one-time Gatekeeper approval on first launch.
+#### Normal download
 
-```bash
-brew install --cask miroslav-gruevski/snapshift/snapshift
-open -a SnapShift
-```
+1. Open the [latest release](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
+2. Download the right DMG:
+   - **Apple Silicon (M1/M2/M3/M4):** `SnapShift_0.1.5_aarch64.dmg`
+   - **Intel Mac:** `SnapShift_0.1.5_x64.dmg`
+3. Open the downloaded `.dmg`.
+4. Drag **SnapShift** into **Applications**.
+5. Open **Applications** and double-click **SnapShift**.
 
-If macOS shows **"Apple could not verify SnapShift.app is free of malware"**:
+SnapShift is a menu bar app. It may not stay in the Dock. Look for the SnapShift icon near the clock in the top-right menu bar.
 
-1. Click **Done**.
-2. Open **System Settings** -> **Privacy & Security**.
-3. Scroll to the **Security** section.
-4. Click **Open Anyway** for SnapShift.
-5. Confirm with Touch ID or your password.
-6. Open SnapShift again with `open -a SnapShift` or from Applications.
+#### If macOS says Apple could not verify the app
 
-**Manual:**
+This is expected for free unsigned Mac builds.
 
-1. Download the `.dmg` for your Mac: `aarch64` (Apple Silicon) or `x64` (Intel).
-2. Open the DMG and drag **SnapShift** into **Applications**.
-3. Open **SnapShift** from Applications.
-4. If macOS blocks it, use **System Settings** -> **Privacy & Security** -> **Open Anyway** as above. Future launches are a normal double-click.
+1. Click **Done** in the warning dialog. If the dialog offers **Move to Bin**, choose **Cancel** instead.
+2. Open **System Settings**.
+3. Go to **Privacy & Security**.
+4. Scroll down to the **Security** section.
+5. Look for a message about **SnapShift** being blocked.
+6. Click **Open Anyway**.
+7. Confirm with Touch ID or your password.
+8. Open **SnapShift** again from Applications.
 
-Terminal fallback if **Open Anyway** does not appear:
+You should only need to do this once.
+
+#### If Open Anyway does not appear
+
+Open **Terminal** and run:
 
 ```bash
 sudo xattr -dr com.apple.quarantine /Applications/SnapShift.app
@@ -51,47 +62,85 @@ codesign --force --deep --sign - /Applications/SnapShift.app
 open -a SnapShift
 ```
 
+Your Mac may ask for your password after the first command. That is normal.
+
+#### Homebrew install
+
+If you already use Homebrew:
+
+```bash
+brew install --cask miroslav-gruevski/snapshift/snapshift
+open -a SnapShift
+```
+
+Homebrew installs SnapShift into Applications, but macOS can still require the same **Privacy & Security -> Open Anyway** approval on first launch.
+
 ### Windows
 
-**Recommended:** Scoop installs per-user (no admin) and skips SmartScreen for users who already trust the bucket.
+#### Normal download
+
+1. Open the [latest release](https://github.com/miroslav-gruevski/SnapShift/releases/latest).
+2. Download `SnapShift_0.1.5_x64_en-US.msi`.
+3. Open the downloaded installer.
+4. Follow the installer steps.
+5. Start SnapShift from the Start menu.
+
+SnapShift runs in the system tray. Look near the clock in the bottom-right corner. If you do not see it, click the small arrow to show hidden tray icons.
+
+#### If Windows shows SmartScreen
+
+Windows may show **Windows protected your PC** because SnapShift is currently unsigned.
+
+1. Click **More info**.
+2. Click **Run anyway**.
+3. Continue the installer.
+
+You should only need to do this once for the installer.
+
+#### Scoop install
+
+If you already use Scoop:
 
 ```powershell
 scoop bucket add snapshift https://github.com/miroslav-gruevski/scoop-snapshift
 scoop install snapshift
 ```
 
-**Manual:**
-
-1. Download the `.msi` (recommended) or the `.exe` setup from Releases.
-2. Run the installer.
-3. If **Windows protected your PC** appears: click **More info** -> **Run anyway**.
-4. Use the system tray icon (notification area) to open the conversion window.
-
 ### Linux
 
-Linux desktops don't quarantine downloads, so any of these work directly.
+Open the [latest release](https://github.com/miroslav-gruevski/SnapShift/releases/latest), then choose the file for your distro.
 
-**Debian / Ubuntu (.deb)**
+#### Debian / Ubuntu
 
 ```bash
 sudo dpkg -i SnapShift_*_amd64.deb
 sudo apt-get install -f
 ```
 
-**Fedora / RHEL (.rpm)**
+#### Fedora / RHEL
 
 ```bash
 sudo rpm -i SnapShift-*.x86_64.rpm
 ```
 
-**AppImage (any distro)**
+#### AppImage (most Linux distros)
 
 ```bash
 chmod +x SnapShift_*_amd64.AppImage
 ./SnapShift_*_amd64.AppImage
 ```
 
-Tray integration depends on your desktop environment (KDE, GNOME with AppIndicator extension, etc.).
+SnapShift uses the system tray. On GNOME, you may need an AppIndicator/tray extension.
+
+## Where To Find SnapShift After Installing
+
+| System | Where it appears |
+|--------|------------------|
+| macOS | Menu bar, top-right near the clock |
+| Windows | System tray, bottom-right near the clock |
+| Linux | System tray or app indicator area |
+
+SnapShift does not open a big normal window at startup. Click the tray/menu bar icon to open the converter.
 
 ## Using SnapShift
 
